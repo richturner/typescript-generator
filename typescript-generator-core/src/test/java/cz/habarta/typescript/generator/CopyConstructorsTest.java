@@ -27,6 +27,7 @@ public class CopyConstructorsTest {
 
     private static class User {
         public String name;
+        public Authentication authentication;
         public boolean childAccount;
         public int age;
         public Address address;
@@ -38,6 +39,10 @@ public class CopyConstructorsTest {
         public List<PagedList<Order>> allOrders;
         public Shape shape;
         public List<Shape> shapes;
+    }
+
+    public enum Authentication {
+        Password, Token, Fingerprint, Voice
     }
 
     public static class Address {

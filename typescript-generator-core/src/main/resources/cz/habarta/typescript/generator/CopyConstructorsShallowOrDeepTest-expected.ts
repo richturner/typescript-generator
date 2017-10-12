@@ -14,21 +14,21 @@ export class User {
     shape: ShapeUnion;
     shapes: ShapeUnion[];
 
-    constructor(data?: User) {
+    constructor(data?: User, deepCopy?: boolean) {
         if (data) {
             this.name = data.name;
             this.authentication = data.authentication;
             this.childAccount = data.childAccount;
             this.age = data.age;
-            this.address = data.address && new Address(data.address);
-            this.addresses = __copyArray(data.addresses, data => new Address(data));
-            this.taggedAddresses = __copyObject(data.taggedAddresses, data => new Address(data));
-            this.groupedAddresses = __copyObject(data.groupedAddresses, __copyArrayFn(data => new Address(data)));
-            this.listOfTaggedAddresses = __copyArray(data.listOfTaggedAddresses, __copyObjectFn(data => new Address(data)));
-            this.orders = data.orders && new PagedList(data.orders, data => data && new Order(data), __identity);
-            this.allOrders = __copyArray(data.allOrders, data => new PagedList(data, data => data && new Order(data), __identity));
-            this.shape = Shape.__copyOf(data.shape);
-            this.shapes = __copyArray(data.shapes, item => Shape.__copyOf(item));
+            this.address = deepCopy ? data.address && new Address(data.address, true) : data.address;
+            this.addresses = deepCopy ? __copyArray(data.addresses, data => new Address(data, true)) : data.addresses;
+            this.taggedAddresses = deepCopy ? __copyObject(data.taggedAddresses, data => new Address(data, true)) : data.taggedAddresses;
+            this.groupedAddresses = deepCopy ? __copyObject(data.groupedAddresses, __copyArrayFn(data => new Address(data, true))) : data.groupedAddresses;
+            this.listOfTaggedAddresses = deepCopy ? __copyArray(data.listOfTaggedAddresses, __copyObjectFn(data => new Address(data, true))) : data.listOfTaggedAddresses;
+            this.orders = deepCopy ? data.orders && new PagedList(data.orders, true, data => data && new Order(data), __identity) : data.orders;
+            this.allOrders = deepCopy ? __copyArray(data.allOrders, data => new PagedList(data, true, data => data && new Order(data), __identity)) : data.allOrders;
+            this.shape = deepCopy ? Shape.__copyOf(data.shape) : data.shape;
+            this.shapes = deepCopy ? __copyArray(data.shapes, item => Shape.__copyOf(item)) : data.shapes;
         }
     }
 }
@@ -37,7 +37,7 @@ export class Address {
     street: string;
     city: string;
 
-    constructor(data?: Address) {
+    constructor(data?: Address, deepCopy?: boolean) {
         if (data) {
             this.street = data.street;
             this.city = data.city;
@@ -50,11 +50,11 @@ export class PagedList<T, A> {
     items: T[];
     additionalInfo: A;
     
-    constructor(data: PagedList<T, A>, constructorFnT: (data: T) => T, constructorFnA: (data: A) => A, target?: PagedList<T, A>) {
+    constructor(data?: PagedList<T, A>, deepCopy?: boolean, constructorFnT?: (data: T) => T, constructorFnA?: (data: A) => A, target?: PagedList<T, A>) {
         if (data) {
             this.page = data.page;
-            this.items = __copyArray(data.items, constructorFnT);
-            this.additionalInfo = constructorFnA(data.additionalInfo);
+            this.items = deepCopy ? __copyArray(data.items, constructorFnT!) : data.items;
+            this.additionalInfo = deepCopy ? constructorFnA!(data.additionalInfo) : data.additionalInfo;
         }
     }
 }
@@ -62,7 +62,7 @@ export class PagedList<T, A> {
 export class Order {
     id: string;
 
-    constructor(data?: Order) {
+    constructor(data?: Order, deepCopy?: boolean) {
         if (data) {
             this.id = data.id;
         }
@@ -73,10 +73,10 @@ export class Shape {
     kind: "square" | "rectangle" | "circle";
     metadata: ShapeMetadata;
 
-    constructor(data?: Shape) {
+    constructor(data?: Shape, deepCopy?: boolean) {
         if (data) {
             this.kind = data.kind;
-            this.metadata = data.metadata && new ShapeMetadata(data.metadata);
+            this.metadata = deepCopy ? new ShapeMetadata(data.metadata, true) : data.metadata;
         }
     }
 
@@ -86,11 +86,11 @@ export class Shape {
         }
         switch (data.kind) {
             case "square":
-                return new Square(data);
+                return new Square(data, true);
             case "rectangle":
-                return new Rectangle(data);
+                return new Rectangle(data, true);
             case "circle":
-                return new Circle(data);
+                return new Circle(data, true);
         }
     }
 }
@@ -98,7 +98,7 @@ export class Shape {
 export class ShapeMetadata {
     group: string;
 
-    constructor(data?: ShapeMetadata) {
+    constructor(data?: ShapeMetadata, deepCopy?: boolean) {
         if (data) {
             this.group = data.group;
         }
@@ -109,7 +109,7 @@ export class Square extends Shape {
     kind: "square";
     size: number;
 
-    constructor(data?: Square) {
+    constructor(data?: Square, deepCopy?: boolean) {
         super(data);
         if (data) {
             this.size = data.size;
@@ -122,7 +122,7 @@ export class Rectangle extends Shape {
     width: number;
     height: number;
 
-    constructor(data?: Rectangle) {
+    constructor(data?: Rectangle, deepCopy?: boolean) {
         super(data);
         if (data) {
             this.width = data.width;
@@ -135,7 +135,7 @@ export class Circle extends Shape {
     kind: "circle";
     radius: number;
 
-    constructor(data?: Circle) {
+    constructor(data?: Circle, deepCopy?: boolean) {
         super(data);
         if (data) {
             this.radius = data.radius;
