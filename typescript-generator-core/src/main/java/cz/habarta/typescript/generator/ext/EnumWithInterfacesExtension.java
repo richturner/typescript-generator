@@ -38,47 +38,7 @@ import java.util.stream.Collectors;
  * <b>NOTE: This extension uses the enum's fields not the getters therefore field names should match those generated
  * for the interface(s)</b>
  * <p>
- * Example usage:
- * <p>
- * <blockquote><pre>{@code
- * public interface Coloured {
- *    String getColour();
- * }
- *
- * public enum Fruit implements Coloured {
- *    BANANA("yellow"),
- *    ORANGE("orange");
- *
- *    public String getColour();
- * }
- *
- * public interface ColouredUsage {
- *    Coloured getColouredThing();
- * }
- * }
- * </pre></blockquote>
- *
- * <p>This would transpile to:
- *
- * <blockquote><pre>{@code
- * const Fruit = {
- *     BANANA: {colour: "yellow"},
- *     ORANGE: {colour: "orange"}
- * };
- *
- * interface Coloured {
- *    colour: string;
- * }
- *
- * interface ColouredUsage {
- *    colouredThing: Coloured;
- * }
- *
- * const colouredUsage: ColouredUsage = {
- *    colouredThing: Fruit.BANANA
- * }
- * }
- * </pre></blockquote>
+ * See {@link cz.habarta.typescript.generator.EnumTest} for example usage.
  * <p>
  * See <a href="https://github.com/vojtechhabarta/typescript-generator/issues/299">https://github.com/vojtechhabarta/typescript-generator/issues/299</a>
  * for discussion relating to this feature.

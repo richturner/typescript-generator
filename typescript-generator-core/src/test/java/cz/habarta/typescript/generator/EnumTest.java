@@ -205,7 +205,6 @@ public class EnumTest {
         settings.outputKind = TypeScriptOutputKind.module;
         settings.outputFileType = TypeScriptFileType.implementationFile;
         EnumWithInterfacesExtension enumExtension = new EnumWithInterfacesExtension();
-        //enumExtension.setConfiguration(Collections.singletonMap(EnumWithInterfacesExtension.CFG_ENUM_PATTERN, "**"));
         settings.extensions.add(enumExtension);
         String output = new TypeScriptGenerator(settings).generateTypeScript(input);
         final String expectedWithExtension = "" +
