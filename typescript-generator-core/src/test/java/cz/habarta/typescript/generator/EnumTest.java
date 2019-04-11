@@ -1,4 +1,3 @@
-
 package cz.habarta.typescript.generator;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -7,6 +6,8 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import cz.habarta.typescript.generator.ext.ClassEnumExtension;
 import java.util.*;
 import static org.junit.Assert.*;
+
+import cz.habarta.typescript.generator.ext.EnumWithInterfacesExtension;
 import org.junit.Test;
 
 public class EnumTest {
@@ -108,7 +109,7 @@ public class EnumTest {
                         "    BTYPE = 'BTYPE',\n" +
                         "    CTYPE = 'CTYPE',\n" +
                         "}\n" +
-                "\ndeclare const enum DummyEnum {\n" +
+                        "\ndeclare const enum DummyEnum {\n" +
                         "    Red = 'Red',\n" +
                         "    Green = 'Green',\n" +
                         "    Blue = 'Blue',\n" +
@@ -192,6 +193,112 @@ public class EnumTest {
                 "    label: string;\n" +
                 "}";
         assertEquals(expected.trim(), output.trim());
+    }
+
+    @Test
+    public void testEnumWithInterface() {
+        Input input = Input.from(ABInterfaceUsage.class, AInterfaceImpl.class, BInterfaceEnum.class, AInterfaceEnum.class);
+        Settings settings = TestUtils.settings();
+        settings.sortDeclarations = true;
+        settings.sortTypeDeclarations = true;
+        settings.optionalProperties = OptionalProperties.all;
+        settings.outputKind = TypeScriptOutputKind.module;
+        settings.outputFileType = TypeScriptFileType.implementationFile;
+        EnumWithInterfacesExtension enumExtension = new EnumWithInterfacesExtension();
+        //enumExtension.setConfiguration(Collections.singletonMap(EnumWithInterfacesExtension.CFG_ENUM_PATTERN, "**"));
+        settings.extensions.add(enumExtension);
+        String output = new TypeScriptGenerator(settings).generateTypeScript(input);
+        final String expectedWithExtension = "" +
+                "export interface ABInterfaceUsage {\n" +
+                "    a?: AInterface;\n" +
+                "    b?: BInterface;\n" +
+                "}\n" +
+                "\n" +
+                "export interface AInterface {\n" +
+                "    description?: string;\n" +
+                "}\n" +
+                "\n" +
+                "export interface AInterfaceImpl extends AInterface {\n" +
+                "}\n" +
+                "\n" +
+                "export interface BInterface {\n" +
+                "    aarRay?: AInterface[];\n" +
+                "    info?: string;\n" +
+                "}\n" +
+                "\n" +
+                "\n" +
+                "// Added by 'EnumWithInterfacesExtension' extension\n" +
+                "\n" +
+                "export class AInterfaceEnum implements AInterface {\n" +
+                "    public static readonly A_1 = new AInterfaceEnum(\"A_1\", \"I am AInterfaceEnum 1\");\n" +
+                "    public static readonly A_2 = new AInterfaceEnum(\"A_2\", \"I am AInterfaceEnum 2\");\n" +
+                "\n" +
+                "    private constructor(public readonly name: string, public readonly description?: string) {}\n" +
+                "\n" +
+                "    toString() {\n" +
+                "        return this.name;\n" +
+                "    }\n" +
+                "}\n" +
+                "\n" +
+                "export class BInterfaceEnum implements BInterface {\n" +
+                "    public static readonly B_1 = new BInterfaceEnum(\"B_1\", undefined, [AInterfaceEnum.A_1,AInterfaceEnum.A_2]);\n" +
+                "    public static readonly B_2 = new BInterfaceEnum(\"B_2\", \"I am BInterfaceEnum 2\", [AInterfaceEnum.A_2,{\"description\":\"I am not AInterfaceEnum\"}]);\n" +
+                "\n" +
+                "    private constructor(public readonly name: string, public readonly info?: string, public readonly aArray?: AInterface[]) {}\n" +
+                "\n" +
+                "    toString() {\n" +
+                "        return this.name;\n" +
+                "    }\n" +
+                "}";
+
+        assertEquals(expectedWithExtension.trim(), output.trim());
+
+        settings = TestUtils.settings();
+        settings.optionalProperties = OptionalProperties.all;
+        settings.sortDeclarations = true;
+        settings.sortTypeDeclarations = true;
+        settings.outputKind = TypeScriptOutputKind.module;
+        settings.outputFileType = TypeScriptFileType.implementationFile;
+        enumExtension = new EnumWithInterfacesExtension();
+        enumExtension.setConfiguration(Collections.singletonMap(EnumWithInterfacesExtension.CFG_ENUM_PATTERN, "**AInterfaceEnum**"));
+        settings.extensions.add(enumExtension);
+        output = new TypeScriptGenerator(settings).generateTypeScript(input);
+        final String expectedWithoutExtension = "" +
+                "\n" +
+                "export interface ABInterfaceUsage {\n" +
+                "    a?: AInterface;\n" +
+                "    b?: BInterface;\n" +
+                "}\n" +
+                "\n" +
+                "export interface AInterface {\n" +
+                "    description?: string;\n" +
+                "}\n" +
+                "\n" +
+                "export interface AInterfaceImpl extends AInterface {\n" +
+                "}\n" +
+                "\n" +
+                "export interface BInterface {\n" +
+                "    aarRay?: AInterface[];\n" +
+                "    info?: string;\n" +
+                "}\n" +
+                "\n" +
+                "export type BInterfaceEnum = \"B_1\" | \"B_2\";\n" +
+                "\n" +
+                "\n" +
+                "// Added by 'EnumWithInterfacesExtension' extension\n" +
+                "\n" +
+                "export class AInterfaceEnum implements AInterface {\n" +
+                "    public static readonly A_1 = new AInterfaceEnum(\"A_1\", \"I am AInterfaceEnum 1\");\n" +
+                "    public static readonly A_2 = new AInterfaceEnum(\"A_2\", \"I am AInterfaceEnum 2\");\n" +
+                "\n" +
+                "    private constructor(public readonly name: string, public readonly description?: string) {}\n" +
+                "\n" +
+                "    toString() {\n" +
+                "        return this.name;\n" +
+                "    }\n" +
+                "}\n";
+
+        assertEquals(expectedWithoutExtension.trim(), output.trim());
     }
 
     private static class AClass {
@@ -297,4 +404,72 @@ public class EnumTest {
         }
     }
 
+    public enum BInterfaceEnum implements BInterface {
+        B_1(null, AInterfaceEnum.A_1, AInterfaceEnum.A_2),
+        B_2("I am BInterfaceEnum 2", AInterfaceEnum.A_2, new AInterfaceImpl("I am not AInterfaceEnum"));
+
+        protected String info;
+        protected AInterface[] aArray;
+
+        BInterfaceEnum(String info, AInterface...aInterfaces) {
+            this.info = info;
+            this.aArray = aInterfaces;
+        }
+
+        @Override
+        public String getInfo() {
+            return info;
+        }
+
+        public AInterface[] getAArRay() {
+            return aArray;
+        }
+    }
+
+    public enum AInterfaceEnum implements AInterface {
+        A_1("I am AInterfaceEnum 1"),
+        A_2("I am AInterfaceEnum 2");
+
+        protected String description;
+
+        AInterfaceEnum(String description) {
+            this.description = description;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+    }
+
+    @JsonFormat(shape = JsonFormat.Shape.OBJECT)
+    public interface AInterface {
+        @JsonProperty
+        String getDescription();
+    }
+
+    public interface BInterface {
+        String getInfo();
+        AInterface[] getAArRay();
+    }
+
+    public static class AInterfaceImpl implements AInterface {
+
+        protected String description;
+
+        public AInterfaceImpl(String description) {
+            this.description = description;
+        }
+
+        @Override
+        public String getDescription() {
+            return description;
+        }
+    }
+
+    public interface ABInterfaceUsage {
+        AInterface getA();
+        BInterface getB();
+    }
+
 }
+
