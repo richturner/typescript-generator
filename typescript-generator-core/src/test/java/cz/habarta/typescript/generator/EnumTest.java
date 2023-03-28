@@ -1,4 +1,3 @@
-
 package cz.habarta.typescript.generator;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
@@ -6,13 +5,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import cz.habarta.typescript.generator.ext.ClassEnumExtension;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
+import java.util.*;
+
+import cz.habarta.typescript.generator.ext.EnumWithInterfacesExtension;
 
 @SuppressWarnings("unused")
 public class EnumTest {
@@ -114,7 +112,7 @@ public class EnumTest {
                         "    BTYPE = 'BTYPE',\n" +
                         "    CTYPE = 'CTYPE',\n" +
                         "}\n" +
-                "\ndeclare const enum DummyEnum {\n" +
+                        "\ndeclare const enum DummyEnum {\n" +
                         "    Red = 'Red',\n" +
                         "    Green = 'Green',\n" +
                         "    Blue = 'Blue',\n" +
@@ -247,6 +245,60 @@ public class EnumTest {
         final String output = new TypeScriptGenerator(settings).generateTypeScript(Input.from(Child.NoEnumFactory.class));
         assertTrue(output.contains("interface Enum<E>"));
     }
+    public void testEnumWithInterface() {
+        Input input = Input.from(ABInterfaceUsage.class, AInterfaceImpl.class, BInterfaceEnum.class, AInterfaceEnum.class);
+        Settings settings = TestUtils.settings();
+        settings.sortDeclarations = true;
+        settings.sortTypeDeclarations = true;
+        settings.optionalProperties = OptionalProperties.all;
+        settings.outputKind = TypeScriptOutputKind.module;
+        settings.outputFileType = TypeScriptFileType.implementationFile;
+        EnumWithInterfacesExtension enumExtension = new EnumWithInterfacesExtension();
+        settings.extensions.add(enumExtension);
+        String output = new TypeScriptGenerator(settings).generateTypeScript(input);
+        final String expectedWithExtension = "" +
+            "export interface ABInterfaceUsage {\n" +
+            "    a?: AInterface;\n" +
+            "    b?: BInterface;\n" +
+            "}\n" +
+            "\n" +
+            "export interface AInterface {\n" +
+            "    description?: string;\n" +
+            "}\n" +
+            "\n" +
+            "export interface AInterfaceImpl extends AInterface {\n" +
+            "}\n" +
+            "\n" +
+            "export interface BInterface {\n" +
+            "    aarRay?: AInterface[];\n" +
+            "    info?: string;\n" +
+            "}\n" +
+            "\n" +
+            "\n" +
+            "// Added by 'EnumWithInterfacesExtension' extension\n" +
+            "\n" +
+            "export class AInterfaceEnum implements AInterface {\n" +
+            "    public static readonly A_1 = new AInterfaceEnum(\"A_1\", \"I am AInterfaceEnum 1\");\n" +
+            "    public static readonly A_2 = new AInterfaceEnum(\"A_2\", \"I am AInterfaceEnum 2\");\n" +
+            "\n" +
+            "    private constructor(public readonly name: string, public readonly description?: string) {}\n" +
+            "\n" +
+            "    toString() {\n" +
+            "        return this.name;\n" +
+            "    }\n" +
+            "}\n" +
+            "\n" +
+            "export class BInterfaceEnum implements BInterface {\n" +
+            "    public static readonly B_1 = new BInterfaceEnum(\"B_1\", undefined, [AInterfaceEnum.A_1,AInterfaceEnum.A_2]);\n" +
+            "    public static readonly B_2 = new BInterfaceEnum(\"B_2\", \"I am BInterfaceEnum 2\", [AInterfaceEnum.A_2,{\"description\":\"I am not AInterfaceEnum\"}]);\n" +
+            "\n" +
+            "    private constructor(public readonly name: string, public readonly info?: string, public readonly aArray?: AInterface[]) {}\n" +
+            "\n" +
+            "    toString() {\n" +
+            "        return this.name;\n" +
+            "    }\n" +
+            "}";
+    }
 
     private static @interface Child {
         public static class NoEnumFactory implements IBaseEnumFactory<Enum<?>> {
@@ -257,7 +309,7 @@ public class EnumTest {
     }
 
     @Test
-    public void testJavaLangEnum2() {
+    public void testJavaLangEnum2 () {
         final Settings settings = TestUtils.settings();
         settings.setExcludeFilter(Arrays.asList(Enum.class.getName()), null);
         final String output = new TypeScriptGenerator(settings).generateTypeScript(Input.from(ClassWithEnum.class));
@@ -274,7 +326,7 @@ public class EnumTest {
 
     enum Direction {
         North,
-        East, 
+        East,
         South,
         West
     }
@@ -372,7 +424,7 @@ public class EnumTest {
     }
 
     @Test
-    public void testEnumMapKeys_asUnion() {
+    public void testEnumMapKeys_asUnion () {
         final Settings settings = TestUtils.settings();
         settings.mapEnum = EnumMapping.asUnion;
         final String output = new TypeScriptGenerator(settings).generateTypeScript(Input.from(ClassWithMapWithEnumKeys.class));
@@ -381,16 +433,16 @@ public class EnumTest {
     }
 
     @Test
-    public void testEnumMapKeys_asInlineUnion() {
+    public void testEnumMapKeys_asInlineUnion () {
         final Settings settings = TestUtils.settings();
         settings.mapEnum = EnumMapping.asInlineUnion;
         final String output = new TypeScriptGenerator(settings).generateTypeScript(Input.from(ClassWithMapWithEnumKeys.class));
-        assertTrue(output.contains("labels: { [P in 'North' | 'East' | 'South' | 'West']?: string }".replace('\'', '"')));
+        assertTrue(output.contains("labels: { [P in 'North' | 'East' | 'South' | 'West']?: string }" .replace('\'', '"')));
         assertTrue(!output.contains("Direction"));
     }
 
     @Test
-    public void testEnumMapKeys_asEnum() {
+    public void testEnumMapKeys_asEnum () {
         final Settings settings = TestUtils.settings();
         settings.mapEnum = EnumMapping.asEnum;
         final String output = new TypeScriptGenerator(settings).generateTypeScript(Input.from(ClassWithMapWithEnumKeys.class));
@@ -399,7 +451,7 @@ public class EnumTest {
     }
 
     @Test
-    public void testEnumMapKeys_asNumberBasedEnum() {
+    public void testEnumMapKeys_asNumberBasedEnum () {
         final Settings settings = TestUtils.settings();
         settings.mapEnum = EnumMapping.asNumberBasedEnum;
         final String output = new TypeScriptGenerator(settings).generateTypeScript(Input.from(ClassWithMapWithEnumKeys.class));
@@ -411,7 +463,7 @@ public class EnumTest {
     }
 
     @Test
-    public void testEnumMapKeys_MixedEnum() {
+    public void testEnumMapKeys_MixedEnum () {
         final Settings settings = TestUtils.settings();
         settings.mapEnum = EnumMapping.asUnion;
         final String output = new TypeScriptGenerator(settings).generateTypeScript(Input.from(ClassWithMixedEnum.class));
@@ -442,7 +494,7 @@ public class EnumTest {
     }
 
     @Test
-    public void testEnumMapKeys_NumberEnum() {
+    public void testEnumMapKeys_NumberEnum () {
         final Settings settings = TestUtils.settings();
         settings.mapEnum = EnumMapping.asNumberBasedEnum;
         final String output = new TypeScriptGenerator(settings).generateTypeScript(Input.from(ClassWithNumberEnum.class));
@@ -461,7 +513,7 @@ public class EnumTest {
         public Map<NumberEnum, String> numberEnumMap;
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main (String[]args) throws Exception {
         final ClassWithMixedEnum classWithMixedEnum = new ClassWithMixedEnum();
         classWithMixedEnum.mixedEnum = MixedEnum.NUMBER;
         classWithMixedEnum.mixedEnumMap = Collections.singletonMap(MixedEnum.NUMBER, "bar");
@@ -473,4 +525,73 @@ public class EnumTest {
         System.out.println(new ObjectMapper().writeValueAsString(classWithNumberEnum));
     }
 
+    public enum BInterfaceEnum implements BInterface {
+        B_1(null, AInterfaceEnum.A_1, AInterfaceEnum.A_2),
+        B_2("I am BInterfaceEnum 2", AInterfaceEnum.A_2, new AInterfaceImpl("I am not AInterfaceEnum"));
+
+        protected String info;
+        protected AInterface[] aArray;
+
+        BInterfaceEnum(String info, AInterface... aInterfaces) {
+            this.info = info;
+            this.aArray = aInterfaces;
+        }
+
+        @Override
+        public String getInfo() {
+            return info;
+        }
+
+        public AInterface[] getAArRay() {
+            return aArray;
+        }
+    }
+
+    public enum AInterfaceEnum implements AInterface {
+        A_1("I am AInterfaceEnum 1"),
+        A_2("I am AInterfaceEnum 2");
+
+        protected String description;
+
+        AInterfaceEnum(String description) {
+            this.description = description;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+    }
+
+    @JsonFormat(shape = JsonFormat.Shape.OBJECT)
+    public interface AInterface {
+        @JsonProperty
+        String getDescription();
+    }
+
+    public interface BInterface {
+        String getInfo();
+
+        AInterface[] getAArRay();
+    }
+
+    public static class AInterfaceImpl implements AInterface {
+
+        protected String description;
+
+        public AInterfaceImpl(String description) {
+            this.description = description;
+        }
+
+        @Override
+        public String getDescription() {
+            return description;
+        }
+    }
+
+    public interface ABInterfaceUsage {
+        AInterface getA();
+
+        BInterface getB();
+    }
 }
+
